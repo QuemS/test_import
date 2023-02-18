@@ -131,16 +131,16 @@ function drawShops(geoMap, shopList) {
                     </div>
 
                     <div class='my-1'>
-                        <a class="btn btn-success " href="tel: ${shop.phone}" role="button">Позвонить</a>
+                        <a class="btn btn-success btn-balloon" href="tel: ${shop.phone}" role="button">Позвонить</a>
                     </div>
 
                     <div class='my-1'>
-                        <a class="btn btn-warning" href="yandexnavi://build_route_on_map?lat_to=${shop.latitude}&lon_to=${shop.longitude}"
+                        <a class="btn btn-warning btn-balloon" href="yandexnavi://build_route_on_map?lat_to=${shop.latitude}&lon_to=${shop.longitude}"
                         role="button">Навигатор</a>
 
                     </div>
                     <div class='my-1'>
-                        <button class="btn btn-danger" id="btn_status_change">Изменить статус</button>
+                        <button class="btn btn-danger btn-balloon" id="btn_status_change">Изменить статус</button>
                     </div>
 
 
@@ -179,11 +179,13 @@ function drawShops(geoMap, shopList) {
         let placemark = new ymaps.Placemark([shop.latitude, shop.longitude], {
             // iconContent: shop.order,
             hintContent: shop.name,
-            shop: shop
+            shop: shop,
+
         }, {
             // preset: getShopPreset(shop),
             iconLayout: buildPlacemarkLayout(shop),
             balloonContentLayout: BalloonContentLayout,
+
             iconShape: {
                 type: 'Circle',
                 // The circle is defined as the center and radius

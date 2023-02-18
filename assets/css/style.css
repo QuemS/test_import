@@ -4,12 +4,8 @@
     cursor: pointer;
 }
 
-
-
-
 .placemark_layout_container {
     position: relative;
-    
     font-size: 30px;
     text-align: center;
     font-weight: bold;
@@ -22,13 +18,15 @@
     position: absolute;
     left: -23px;
     top: -23px;
-    width: 66px;
-    height: 66px;
+    width: 51px;
+    height: 51px;
     /* border: 2px solid #225D9C; */
     line-height: 46px;
     /* This CSS property won't work in Internet Explorer 8 */
-    border-radius: 46px;
+    border-radius: 50px;
 }
+
+
 
 .visited_circle_layout {
     background-color: rgb(37, 190, 37);
@@ -37,6 +35,10 @@
 .not_visited_circle_layout {
     background-color: red;
     color: white;
+}
+
+.btn-balloon{
+    min-height: 50px;
 }
 
 /*MEDIA*/
