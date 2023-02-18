@@ -1,0 +1,55 @@
+.drop-hover:hover {
+    background-color: rgb(100, 100, 243);
+    color: white;
+    cursor: pointer;
+}
+
+
+
+
+.placemark_layout_container {
+    position: relative;
+    
+    font-size: 30px;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+/* Round placemark layout */
+.circle_layout {
+    background-color: white;
+    position: absolute;
+    left: -23px;
+    top: -23px;
+    width: 46px;
+    height: 46px;
+    /* border: 2px solid #225D9C; */
+    line-height: 46px;
+    /* This CSS property won't work in Internet Explorer 8 */
+    border-radius: 50px;
+}
+
+.visited_circle_layout {
+    background-color: green;
+}
+
+.not_visited_circle_layout {
+    background-color: red;
+}
+
+/*MEDIA*/
+
+
+@media all and (min-width: 960px) and (max-width: 1024px) {
+    .btn-xl {
+        padding: 10px 20px;
+        font-size: 3.5vw;
+        border-radius: 10px;
+    }
+    .list-drop{
+        color:rgb(43, 41, 41);
+        font-size: 4vw;
+        
+    }
+}
