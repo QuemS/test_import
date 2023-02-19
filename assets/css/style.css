@@ -4,6 +4,7 @@
     cursor: pointer;
 }
 
+
 .placemark_layout_container {
     position: relative;
     font-size: 30px;
@@ -26,8 +27,6 @@
     border-radius: 50px;
 }
 
-
-
 .visited_circle_layout {
     background-color: rgb(37, 190, 37);
 }
@@ -37,9 +36,10 @@
     color: white;
 }
 
-.btn-balloon{
-    min-height: 50px;
-}
+/*.btn-balloon{*/
+/*    min-height: 50px;*/
+/*}*/
+
 
 /*MEDIA*/
 
@@ -49,6 +49,9 @@
         padding: 10px 20px;
         font-size: 6vw;
         border-radius: 10px;
+    }
+    .btn-balloon {
+        font-size: 3vw;
     }
     .list-drop{
         color:rgb(43, 41, 41);
