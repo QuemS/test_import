@@ -1,19 +1,64 @@
 const URL = 'http://18.185.247.193'
+import {getAlert} from "./alerts.js";
+import {
+    DRIVERS_LOADING_ERROR,
+    SHOPS_LOADING_ERROR,
+    STATUS_CHANGE_ERROR,
+    DOWS_LOADING_ERROR
+} from './alertMessages.js'
 
-async function loadDrivers() {
-
+async function loadDOWs() {
     try {
-        let response = await fetch(`${URL}/api/v1/drivers`);
-        let json = await response.json();
-        return json
+        let response = await fetch(`${URL}/api/v1/days_of_week`);
+        if (!response.ok) {
+            throw new Error('Failed to load dow list.');
+        }
+        return await response.json();
     } catch (error) {
-        console.log(error);
+        Raven.captureException(error);
+        getAlert(DOWS_LOADING_ERROR, 'danger');
+        return [];
     }
-
-    // return [{ id: 1, name: "Alex" }, { id: 2, name: "Mike" }];
 }
 
-async function loadShops(driverId) {
+async function loadDrivers() {
+    try {
+        let response = await fetch(`${URL}/api/v1/drivers`);
+        if (!response.ok) {
+            throw new Error('Failed to load drivers list.');
+        }
+        return await response.json();
+    } catch (error) {
+        Raven.captureException(error);
+        getAlert(DRIVERS_LOADING_ERROR, 'danger');
+        return [];
+    }
+    // return [
+    //     {
+    //         "email": "admin@shoplist.com",
+    //         "is_active": true,
+    //         "is_superuser": true,
+    //         "full_name": "Alex",
+    //         "id": 1
+    //     },
+    //     {
+    //         "email": "Hrant@shoplist.com",
+    //         "is_active": true,
+    //         "is_superuser": false,
+    //         "full_name": "Hrant",
+    //         "id": 2
+    //     },
+    //     {
+    //         "email": "David@shoplist.com",
+    //         "is_active": true,
+    //         "is_superuser": false,
+    //         "full_name": "David",
+    //         "id": 3
+    //     }
+    // ];
+}
+
+async function loadShops(driverId, dow) {
     // let sampleShops = [
     //     {
     //         id: 1,
@@ -61,47 +106,48 @@ async function loadShops(driverId) {
     //     }
     // ];
 
-    let sampleShops
     try {
-        let response = await fetch(`${URL}/api/v1/drivers`);
-        sampleShops = await response.json();
+        let response = await fetch(`${URL}/api/v1/drivers/${driverId}/shops?day_of_week=${dow}`);
+        if (!response.ok) {
+            throw new Error("Failed to load shops list.");
+        }
+        let shops = await response.json();
+        return shops.sort((a, b) => a.in_day_order - b.in_day_order);
     } catch (error) {
-        console.log(error);
+        Raven.captureException(error);
+        getAlert(SHOPS_LOADING_ERROR, 'danger');
+        return [];
     }
-
-    let shops = sampleShops.filter(x => x.driverId === driverId);
-    shops.sort((a, b) => a.in_day_order < b.in_day_order);
-    return shops;
-
 }
 
-async function changeStoreStatusPost(driverId, shopId, coordinates) {
-    let data = {
-        driver_id: driverId,
-        shop_id: shopId,
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-
-    }
+async function changeStoreStatus(driverId, shopId, coordinate, status) {
     try {
+        let data = {
+            driver_id: driverId,
+            shop_id: shopId,
+            latitude: coordinate[0],
+            longitude: coordinate[1],
+            status: status,
+
+        };
         let response = await fetch(`${URL}/api/v1/change_shop_status`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json;charset=utf-8'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
         });
-
-        let result = await response.json();
-        console.log(result);
+        if (!response.ok) {
+            throw new Error('Failed to change shop status.');
+        }
+        // getAlert(messageSuccessStatus, 'success')
         return true;
     } catch (error) {
-        console.log(error);
+        Raven.captureException(error);
+        getAlert(STATUS_CHANGE_ERROR, 'danger');
+        return false;
     }
-    // send api call;
-    // return TRUE on success
-
 }
 
 
-export { loadDrivers, loadShops, changeStoreStatusPost }
+export {loadDrivers, loadShops, changeStoreStatus, loadDOWs}

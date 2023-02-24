@@ -1,4 +1,5 @@
-import { changeStoreStatusPost } from './api.js'
+import {changeStoreStatus} from './api.js'
+
 function buildPlacemarkLayout(shop) {
     let placemark_class = (shop.status === 'visited') ? 'visited_circle_layout' : 'not_visited_circle_layout';
     return ymaps.templateLayoutFactory.createClass(
@@ -10,13 +11,22 @@ function buildPlacemarkLayout(shop) {
             </div>
         </div>
     `);
-};
+}
 
 import 'https://yandex.st/jquery/1.6.4/jquery.min.js';
+
 let DriversListBoxLayoutStr = "<button id='drivers-listbox-header ' class='btn btn-xl btn-success dropdown-toggle' data-toggle='dropdown'>" +
     "{{data.title}} <span class='caret'></span>" +
     "</button>" +
     "<ul id='drivers-listbox'" +
+    " class='dropdown-menu' role='menu' aria-labelledby='dropdownMenu'" +
+    " style='display: {% if state.expanded %}block{% else %}none{% endif %};'></ul>";
+
+
+let DOWListBoxLayoutStr = "<button id='dow-listbox-header ' class='btn btn-xl btn-success dropdown-toggle' data-toggle='dropdown'>" +
+    "{{data.title}} <span class='caret'></span>" +
+    "</button>" +
+    "<ul id='dow-listbox'" +
     " class='dropdown-menu' role='menu' aria-labelledby='dropdownMenu'" +
     " style='display: {% if state.expanded %}block{% else %}none{% endif %};'></ul>";
 
@@ -36,12 +46,12 @@ let ShopsListBoxLayoutStr = "<button id='shops-listbox-header' class='btn btn-xl
 
 let ListBoxItemLayoutStr = "<li class='py-2 drop-hover px-2 list-drop'><a>{{data.content}}</a></li>";
 
-function driversListBoxLayoutFn() {
+function generateDriversListBoxLayout() {
     return ymaps.templateLayoutFactory.createClass(DriversListBoxLayoutStr,
         {
             build: function () {
 
-                driversListBoxLayoutFn().superclass.build.call(this);
+                generateDriversListBoxLayout().superclass.build.call(this);
 
                 this.childContainerElement = $('#drivers-listbox').get(0);
 
@@ -64,14 +74,44 @@ function driversListBoxLayoutFn() {
                 });
                 this.childContainerElement = null;
 
-                driversListBoxLayoutFn().superclass.clear.call(this);
+                generateDriversListBoxLayout().superclass.clear.call(this);
             }
         });
 }
-function shopsListBoxLayoutFn() {
+
+function generateDOWListBoxLayout() {
+    return ymaps.templateLayoutFactory.createClass(DOWListBoxLayoutStr, {
+        build: function () {
+            generateDOWListBoxLayout().superclass.build.call(this);
+
+            this.childContainerElement = $('#dow-listbox').get(0);
+
+            this.events.fire('childcontainerchange', {
+                newChildContainerElement: this.childContainerElement,
+                oldChildContainerElement: null
+            });
+        },
+
+        getChildContainerElement: function () {
+            return this.childContainerElement;
+        },
+
+        clear: function () {
+            this.events.fire('childcontainerchange', {
+                newChildContainerElement: null,
+                oldChildContainerElement: this.childContainerElement
+            });
+            this.childContainerElement = null;
+
+            generateDOWListBoxLayout().superclass.clear.call(this);
+        }
+    });
+}
+
+function generateShopsListBoxLayout() {
     return ymaps.templateLayoutFactory.createClass(ShopsListBoxLayoutStr, {
         build: function () {
-            shopsListBoxLayoutFn().superclass.build.call(this);
+            generateShopsListBoxLayout().superclass.build.call(this);
 
             this.childContainerElement = $('#shops-listbox').get(0);
 
@@ -93,16 +133,14 @@ function shopsListBoxLayoutFn() {
             });
             this.childContainerElement = null;
 
-            shopsListBoxLayoutFn().superclass.clear.call(this);
+            generateShopsListBoxLayout().superclass.clear.call(this);
         }
     });
 }
-function listBoxItemLayoutFn() {
-    return ymaps.templateLayoutFactory.createClass(ListBoxItemLayoutStr);
-}
-
 
 function balloonContentLayoutFn(shop, geoMap, selectedDriver, shopsList, coordinates) {
+    let status = shop.status;
+
     return ymaps.templateLayoutFactory.createClass(
         `
             <div class='d-flex flex-column ps-1 balloon'>
@@ -114,7 +152,7 @@ function balloonContentLayoutFn(shop, geoMap, selectedDriver, shopsList, coordin
                 </div>
 
                 <div class='my-1'>
-                    <a class="btn btn-success btn-balloon" href="tel: ${shop.phone}" role="button">Позвонить</a>
+                    <a class="btn btn-success btn-balloon" href="tel: ${shop.phone_number}" role="button">Позвонить</a>
                 </div>
 
                 <div class='my-1'>
@@ -125,52 +163,52 @@ function balloonContentLayoutFn(shop, geoMap, selectedDriver, shopsList, coordin
                         <button class="btn btn-danger btn-balloon" id="btn_status_change">Изменить статус</button>
                 </div>
             </div>`, {
-        build: function () {
-            // First, we call the "build" method of the parent class.
-            balloonContentLayoutFn(shop).superclass.build.call(this);
-            // Then we perform additional steps.
-            $('#btn_status_change').bind('click', this.statusChangeClick);
-        },
+            build: function () {
+                // First, we call the "build" method of the parent class.
+                balloonContentLayoutFn(shop).superclass.build.call(this);
+                // Then we perform additional steps.
+                $('#btn_status_change').bind('click', this.statusChangeClick);
+            },
 
 
-        clear: function () {
-            $('#btn_status_change').unbind('click', this.statusChangeClick);
-            balloonContentLayoutFn(shop).superclass.clear.call(this);
-        },
+            clear: function () {
+                $('#btn_status_change').unbind('click', this.statusChangeClick);
+                balloonContentLayoutFn(shop).superclass.clear.call(this);
+            },
 
-        statusChangeClick: function () {
-            changeStoreStatus(geoMap, selectedDriver.id, shop.id, shopsList, coordinates);
-        }
-    });
-}
+            statusChangeClick: async function () {
+                if (await changeStoreStatus(geoMap, selectedDriver.id, shop.id, shopsList, coordinates, status)) {
+                    let shop = null;
+                    for (let i = 0; i < shopsList.length; i++) {
+                        if (shopsList[i].id === shopId) {
+                            shop = shopsList[i];
+                            shop.status = (shop.status === 'visited') ? 'not_visited' : 'visited';
+                        }
+                    }
 
-async function changeStoreStatus(geoMap, driverId, shopId, shopsList, coordinates) {
-    console.log('post', await changeStoreStatusPost(driverId, shopId, coordinates));
+                    if (shop === null) {
+                        // error
+                    }
 
-    // TODO: send api call
-    // if success:
-    let shop = null;
-    for (let i = 0; i < shopsList.length; i++) {
-        if (shopsList[i].id === shopId) {
-            shop = shopsList[i];
-            shop.status = (shop.status === 'visited') ? 'not_visited' : 'visited';
-        }
-    }
+                    geoMap.geoObjects.each(placemark => {
+                        if (placemark.properties.get('shop').id === shopId) {
+                            placemark.properties.set('shop', shop);
+                            placemark.options.set('iconLayout', buildPlacemarkLayout(shop));
+                        }
+                    });
+                }
 
-    if (shop === null) {
-        // error
-    }
-
-    geoMap.geoObjects.each(placemark => {
-        if (placemark.properties.get('shop').id === shopId) {
-            placemark.properties.set('shop', shop);
-            placemark.options.set('iconLayout', buildPlacemarkLayout(shop));
-        }
-    });
+            }
+        });
 }
 
 
-
-
-
-export { driversListBoxLayoutFn, shopsListBoxLayoutFn, listBoxItemLayoutFn, balloonContentLayoutFn, buildPlacemarkLayout }
+export {
+    DriversListBoxLayoutStr,
+    ShopsListBoxLayoutStr,
+    ListBoxItemLayoutStr,
+    DOWListBoxLayoutStr,
+    generateDriversListBoxLayout,
+    generateShopsListBoxLayout,
+    generateDOWListBoxLayout
+};
